@@ -1,8 +1,8 @@
-import React, {useState} from "react";
-import {useLogicForm} from "./useLogicForm.ts";
+import React, { useState } from "react";
+import { useLogicForm } from "./useLogicForm.ts";
 
 const FormEquation: React.FC = () => {
-    const [formState, setFormState] = useState({numberEquation: 1});
+    const [formState, setFormState] = useState({ numberEquation: 1 });
     const {
         equations,
         timeFormData,
@@ -12,21 +12,16 @@ const FormEquation: React.FC = () => {
         setEquations
     } = useLogicForm();
 
-
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const numberEquation = parseInt(event.target.value, 10);
-        setFormState({...formState, numberEquation});
+        setFormState({ ...formState, numberEquation });
 
         if (numberEquation > equations.length) {
-            setEquations([...equations, ...Array(numberEquation - equations.length).fill({
-                startValue: '',
-                parameters: ''
-            })]);
+            setEquations([...equations, ...Array(numberEquation - equations.length).fill({ startValue: 0, parameters: 0 })]);
         } else {
             setEquations(equations.slice(0, numberEquation));
         }
     };
-
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -49,15 +44,15 @@ const FormEquation: React.FC = () => {
                 </select>
             </div>
 
-
             {equations.map((equation, index) => (
                 <div className='flex items-center flex-grow' key={index}>
                     <p>Введите начальное значение для Y_{index + 1}:</p>
                     <input
                         className='border-2 border-black m-2 p-1'
-                        type="text"
-                        value={equation.startValue}
-                        onChange={(event) => handleStartValueChange(index, event.target.value)}
+                        type="number"
+                        value={equation.startValue === null ? '' : equation.startValue}
+                        step="any"
+                        onChange={(event) => handleStartValueChange(index, parseFloat(event.target.value))}
                     />
                 </div>
             ))}
@@ -67,9 +62,10 @@ const FormEquation: React.FC = () => {
                     <p>Введите параметры для Y_{index + 1}:</p>
                     <input
                         className='border-2 border-black m-2 p-1'
-                        type="text"
-                        value={equation.parameters}
-                        onChange={(event) => handleParametersChange(index, event.target.value)}
+                        type="number"
+                        value={equation.parameters === null ? '' : equation.parameters}
+                        step="any"
+                        onChange={(event) => handleParametersChange(index, parseFloat(event.target.value))}
                     />
                 </div>
             ))}
@@ -77,10 +73,10 @@ const FormEquation: React.FC = () => {
             <div className='flex items-center flex-grow'>
                 Начальное время :
                 <input
-                    type="text"
+                    type="number"
                     name="startTime"
                     value={timeFormData.startTime}
-                    onChange={handleTimeInputChange}
+                    onChange={(event) => handleTimeInputChange(event)}
                     className='border-2 border-black m-2 p-1'
                 />
             </div>
@@ -88,22 +84,22 @@ const FormEquation: React.FC = () => {
             <div className='flex items-center flex-grow'>
                 Конечное время :
                 <input
-                    type="text"
+                    type="number"
                     name="endTime"
                     className='border-2 border-black m-2 p-1'
                     value={timeFormData.endTime}
-                    onChange={handleTimeInputChange}
+                    onChange={(event) => handleTimeInputChange(event)}
                 />
             </div>
 
             <div className='flex items-center flex-grow'>
                 Шаг :
                 <input
-                    type="text"
+                    type="number"
                     name="step"
                     className='border-2 border-black m-2 p-1'
                     value={timeFormData.step}
-                    onChange={handleTimeInputChange}
+                    onChange={(event) => handleTimeInputChange(event)}
                 />
             </div>
 

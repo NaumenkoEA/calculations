@@ -1,45 +1,35 @@
-// equationsLogic.ts
-import React, {useState} from "react";
-
-const isValidNumberInput = (input: string) => /^-?\d*\.?\d*$/.test(input);
+import React, { useState } from "react";
 
 interface EquationFormData {
-    startValue: string;
-    parameters: string;
+    startValue: number;
+    parameters: number;
 }
 
 interface TimeFormData {
-    startTime: string;
-    endTime: string;
-    step: string;
+    startTime: number;
+    endTime: number;
+    step: number;
 }
 
 export const useLogicForm = () => {
-    const [equations, setEquations] = useState<EquationFormData[]>([{startValue: '', parameters: ''}]);
-    const [timeFormData, setTimeFormData] = useState<TimeFormData>({startTime: '', endTime: '', step: ''});
+    const [equations, setEquations] = useState<EquationFormData[]>([{ startValue: 0, parameters: 0 }]);
+    const [timeFormData, setTimeFormData] = useState<TimeFormData>({ startTime: 0, endTime: 0, step: 0 });
 
-    const handleStartValueChange = (index: number, value: string) => {
-        if (isValidNumberInput(value)) {
-            const newEquations = [...equations];
-            newEquations[index].startValue = value;
-            setEquations(newEquations);
-        }
+    const handleStartValueChange = (index: number, value: number) => {
+        const newEquations = [...equations];
+        newEquations[index].startValue = value;
+        setEquations(newEquations);
     };
 
-    const handleParametersChange = (index: number, value: string) => {
-        if (isValidNumberInput(value)) {
-            const newEquations = [...equations];
-            newEquations[index].parameters = value;
-            setEquations(newEquations);
-        }
+    const handleParametersChange = (index: number, value: number) => {
+        const newEquations = [...equations];
+        newEquations[index].parameters = value;
+        setEquations(newEquations);
     };
 
     const handleTimeInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-
-        const {name, value} = event.target;
-        if (isValidNumberInput(value)) {
-            setTimeFormData({...timeFormData, [name]: value});
-        }
+        const { name, value } = event.target;
+        setTimeFormData({ ...timeFormData, [name]: parseFloat(value) }); // преобразуем строку в число
     };
 
     return {
