@@ -1,11 +1,15 @@
-import React, { useState } from "react";
-import { useLogicForm } from "./useLogicForm.ts";
+import React, {useEffect, useState} from "react";
+import {useLogicForm} from "./useLogicForm";
+import {EquationFormData} from "../../App.tsx";
 
-const FormEquation: React.FC = () => {
-    const [formState, setFormState] = useState({ numberEquation: 1 });
+interface FormEquationProps {
+setResult: React.Dispatch<React.SetStateAction<EquationFormData | undefined>>;
+}
+
+const FormEquation: React.FC<FormEquationProps> = ({ setResult }) => {
+    const [countEquation, setCountEquation] = useState<number>(1);
     const {
         equations,
-        timeFormData,
         handleStartValueChange,
         handleParametersChange,
         handleTimeInputChange,
@@ -14,19 +18,62 @@ const FormEquation: React.FC = () => {
 
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const numberEquation = parseInt(event.target.value, 10);
-        setFormState({ ...formState, numberEquation });
+        setCountEquation(numberEquation);
 
         if (numberEquation > equations.length) {
-            setEquations([...equations, ...Array(numberEquation - equations.length).fill({ startValue: 0, parameters: 0 })]);
+            const newEquations = [...equations];
+            for (let i :number = equations.length; i < numberEquation; i++) {
+                newEquations.push({
+                    countEquations: 0,
+                    yi: [0],
+                    parameters: [0],
+                    startTime: 0,
+                    endTime: 0,
+                    stepTime: 0
+                });
+            }
+            setEquations(newEquations);
         } else {
             setEquations(equations.slice(0, numberEquation));
         }
     };
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        const sendDataToServer = async (equations: EquationFormData[]) => {
+            try {
+                const response = await fetch('http://localhost:5189/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        equations
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при отправке данных на сервер');
+                }
+
+                const data = await response.json();
+                setResult(data); // Устанавливаем полученные данные в result
+                console.log('Данные успешно отправлены на сервер:', data);
+            } catch (error) {
+                console.error('Произошла ошибка:', error);
+            }
+        };
+
+        sendDataToServer(equations);
+    }, [equations, setResult]);
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         console.log('Данные уравнений:', equations);
-        console.log('Данные времени:', timeFormData);
+        try {
+            // Дополнительные действия при отправке формы, если необходимо
+        } catch (error) {
+            console.error('Ошибка отправки данных на сервер:', error);
+        }
     };
 
     return (
@@ -34,7 +81,7 @@ const FormEquation: React.FC = () => {
             <div className='flex items-center flex-grow '>
                 <h1 className='w-72'>Выберите количество уравнений:</h1>
                 <select
-                    value={formState.numberEquation.toString()}
+                    value={countEquation.toString()}
                     onChange={handleSelectChange}
                     className='border-2 border-black p-1 rounded-2xl w-12 '
                 >
@@ -44,28 +91,28 @@ const FormEquation: React.FC = () => {
                 </select>
             </div>
 
-            {equations.map((equation, index) => (
+            {equations.map((_, index) => (
                 <div className='flex items-center flex-grow' key={index}>
                     <p>Введите начальное значение для Y_{index + 1}:</p>
                     <input
                         className='border-2 border-black m-2 p-1'
                         type="number"
-                        value={equation.startValue === null ? '' : equation.startValue}
+                        value={equations[index].yi[0] ?? []}
                         step="any"
-                        onChange={(event) => handleStartValueChange(index, parseFloat(event.target.value))}
+                        onChange={(event) => handleStartValueChange(index, event.currentTarget.value)}
                     />
                 </div>
             ))}
 
-            {equations.map((equation, index) => (
+            {equations.map((_, index) => (
                 <div className='flex items-center flex-grow' key={index}>
                     <p>Введите параметры для Y_{index + 1}:</p>
                     <input
                         className='border-2 border-black m-2 p-1'
                         type="number"
-                        value={equation.parameters === null ? '' : equation.parameters}
+                        value={equations[index].parameters[0] ?? ""}
                         step="any"
-                        onChange={(event) => handleParametersChange(index, parseFloat(event.target.value))}
+                        onChange={(event) => handleParametersChange(index, event.currentTarget.value)}
                     />
                 </div>
             ))}
@@ -75,7 +122,7 @@ const FormEquation: React.FC = () => {
                 <input
                     type="number"
                     name="startTime"
-                    value={timeFormData.startTime}
+                    value={equations[0].startTime ?? ""}
                     onChange={(event) => handleTimeInputChange(event)}
                     className='border-2 border-black m-2 p-1'
                 />
@@ -87,7 +134,7 @@ const FormEquation: React.FC = () => {
                     type="number"
                     name="endTime"
                     className='border-2 border-black m-2 p-1'
-                    value={timeFormData.endTime}
+                    value={equations[0].endTime ?? ""}
                     onChange={(event) => handleTimeInputChange(event)}
                 />
             </div>
@@ -96,9 +143,9 @@ const FormEquation: React.FC = () => {
                 Шаг :
                 <input
                     type="number"
-                    name="step"
+                    name="stepTime"
                     className='border-2 border-black m-2 p-1'
-                    value={timeFormData.step}
+                    value={equations[0].stepTime ?? ""}
                     onChange={(event) => handleTimeInputChange(event)}
                 />
             </div>

@@ -1,40 +1,57 @@
-import React, { useState } from "react";
+import React, {useState} from 'react';
+import {EquationFormData} from "../../App.tsx";
 
-interface EquationFormData {
-    startValue: number;
-    parameters: number;
-}
 
-interface TimeFormData {
-    startTime: number;
-    endTime: number;
-    step: number;
-}
 
 export const useLogicForm = () => {
-    const [equations, setEquations] = useState<EquationFormData[]>([{ startValue: 0, parameters: 0 }]);
-    const [timeFormData, setTimeFormData] = useState<TimeFormData>({ startTime: 0, endTime: 0, step: 0 });
+    const [equations, setEquations] = useState<EquationFormData[]>([{
+        countEquations: 1,
+        yi: [0],
+        parameters: [0],
+        startTime: 0,
+        endTime: 0,
+        stepTime: 0
+    }]);
 
-    const handleStartValueChange = (index: number, value: number) => {
-        const newEquations = [...equations];
-        newEquations[index].startValue = value;
+    const handleStartValueChange = (index: number, value: string) => {
+        const newEquations = equations.map((equation, eqIndex) => {
+            if (eqIndex === index) {
+                return {
+                    ...equation,
+                    yi: [value === '' ? 0 : parseFloat(value)] // Обновляем значение yi
+                };
+            }
+            return equation;
+        });
         setEquations(newEquations);
     };
 
-    const handleParametersChange = (index: number, value: number) => {
-        const newEquations = [...equations];
-        newEquations[index].parameters = value;
+
+    const handleParametersChange = (index: number, value: string) => {
+        const newEquations = equations.map((equation, eqIndex) => {
+            if (eqIndex === index) {
+                return {
+                    ...equation,
+                    parameters: [value === '' ? 0 : parseFloat(value)]
+                };
+            }
+            return equation;
+        });
         setEquations(newEquations);
     };
 
     const handleTimeInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = event.target;
-        setTimeFormData({ ...timeFormData, [name]: parseFloat(value) }); // преобразуем строку в число
+        const {name, value} = event.target;
+        const parsedValue = value !== '' ? parseFloat(value) : null;
+        const newEquations = equations.map(equation => ({
+            ...equation,
+            [name]: parsedValue
+        }));
+        setEquations(newEquations);
     };
 
     return {
         equations,
-        timeFormData,
         handleStartValueChange,
         handleParametersChange,
         handleTimeInputChange,
