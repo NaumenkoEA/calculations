@@ -1,32 +1,38 @@
+import {SubmitHandler, useForm} from "react-hook-form";
 import React, {useEffect, useState} from "react";
-import {useLogicForm} from "./useLogicForm";
-import {EquationFormData} from "../../App.tsx";
+import {MyForm} from "../../App.tsx";
 
-interface FormEquationProps {
-setResult: React.Dispatch<React.SetStateAction<EquationFormData | undefined>>;
-}
 
-const FormEquation: React.FC<FormEquationProps> = ({ setResult }) => {
-    const [countEquation, setCountEquation] = useState<number>(1);
-    const {
-        equations,
-        handleStartValueChange,
-        handleParametersChange,
-        handleTimeInputChange,
-        setEquations
-    } = useLogicForm();
+const FormEquation: React.FC = () => {
+    const [countEquations, setCountEquations] = useState<number>(1)
+    const {register, handleSubmit} = useForm<MyForm>({
+        defaultValues: {
+            countEquations: 1,
+            startTime: 0
+        }
+    });
+
+
+    const [equations, setEquations] = useState<MyForm[]>([{
+        countEquations: 1,
+        yi: [0],
+        parameters: [0],
+        startTime: 0,
+        endTime: 0,
+        stepTime: 0
+    }]);
 
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const numberEquation = parseInt(event.target.value, 10);
-        setCountEquation(numberEquation);
+        setCountEquations(numberEquation);
 
-        if (numberEquation > equations.length) {
+        if (numberEquation > countEquations) {
             const newEquations = [...equations];
-            for (let i :number = equations.length; i < numberEquation; i++) {
+            for (let i: number = equations.length; i < numberEquation; i++) {
                 newEquations.push({
                     countEquations: 0,
-                    yi: [0],
-                    parameters: [0],
+                    yi: [],
+                    parameters: [],
                     startTime: 0,
                     endTime: 0,
                     stepTime: 0
@@ -38,121 +44,88 @@ const FormEquation: React.FC<FormEquationProps> = ({ setResult }) => {
         }
     };
 
+
     useEffect(() => {
-        const sendDataToServer = async (equations: EquationFormData[]) => {
-            try {
-                const response = await fetch('http://localhost:5189/calculate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        equations
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка при отправке данных на сервер');
-                }
-
-                const data = await response.json();
-                setResult(data); // Устанавливаем полученные данные в result
-                console.log('Данные успешно отправлены на сервер:', data);
-            } catch (error) {
-                console.error('Произошла ошибка:', error);
-            }
+        // POST request using fetch inside useEffect React hook
+        const requestOptions = {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({equations})
         };
+        fetch('http://localhost:5189/calculate', requestOptions)
+            .then(response => response.json())
+        console.log('то что в equations ', equations)
+// empty dependency array means this effect will only run once (like componentDidMount in classes)
+    }, [equations]);
 
-        sendDataToServer(equations);
-    }, [equations, setResult]);
+    const submit: SubmitHandler<MyForm> = data => {
+        console.log('Data', data);
+    }
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        console.log('Данные уравнений:', equations);
-        try {
-            // Дополнительные действия при отправке формы, если необходимо
-        } catch (error) {
-            console.error('Ошибка отправки данных на сервер:', error);
-        }
-    };
+    return <div className='flex-col  '>
+        <h1>Введите данные дифференциального уравнения</h1>
+        <form onSubmit={handleSubmit(submit)} className='flex-col '>
 
-    return (
-        <form onSubmit={handleSubmit} className='flex flex-col'>
-            <div className='flex items-center flex-grow '>
-                <h1 className='w-72'>Выберите количество уравнений:</h1>
+            <div className='flex items-center p-1'>
+                <p className='mr-2'>Количество уравнений :</p>
                 <select
-                    value={countEquation.toString()}
+                    {...register('countEquations', {required: true})}
+                    className='flex m-1 p-1 rounded-xl'
                     onChange={handleSelectChange}
-                    className='border-2 border-black p-1 rounded-2xl w-12 '
-                >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
+                >{[1, 2, 3, 4].map(i =>
+                    <option key={i} value={i}>{i}</option>
+                )}
                 </select>
             </div>
 
             {equations.map((_, index) => (
-                <div className='flex items-center flex-grow' key={index}>
-                    <p>Введите начальное значение для Y_{index + 1}:</p>
+                <div className='flex items-center m-1 '>
+                    <p className='mr-2'>Начальное значение для Y_{index + 1} :</p>
                     <input
-                        className='border-2 border-black m-2 p-1'
                         type="number"
-                        value={equations[index].yi[0] ?? []}
-                        step="any"
-                        onChange={(event) => handleStartValueChange(index, event.currentTarget.value)}
-                    />
+                        step='any'
+                        {...register('yi', {required: true})}
+                        className='flex m-1 p-1 rounded-xl'/>
+
+                    <p className='mr-2'>Параметр для Y_{index + 1}:</p>
+                    <input
+                        type="number"
+                        step='any'
+                        {...register('parameters', {required: true})}
+                        className='flex m-1 p-1 rounded-xl'/>
                 </div>
             ))}
 
-            {equations.map((_, index) => (
-                <div className='flex items-center flex-grow' key={index}>
-                    <p>Введите параметры для Y_{index + 1}:</p>
-                    <input
-                        className='border-2 border-black m-2 p-1'
-                        type="number"
-                        value={equations[index].parameters[0] ?? ""}
-                        step="any"
-                        onChange={(event) => handleParametersChange(index, event.currentTarget.value)}
-                    />
-                </div>
-            ))}
-
-            <div className='flex items-center flex-grow'>
-                Начальное время :
+            <div className='flex items-center m-1'>
+                <p className='mr-2'>Начальное время :</p>
                 <input
                     type="number"
-                    name="startTime"
-                    value={equations[0].startTime ?? ""}
-                    onChange={(event) => handleTimeInputChange(event)}
-                    className='border-2 border-black m-2 p-1'
-                />
+                    step='any'
+                    {...register('startTime', {required: true})}
+                    className='flex m-1 p-1 rounded-xl'/>
             </div>
 
-            <div className='flex items-center flex-grow'>
-                Конечное время :
+            <div className='flex items-center m-1'>
+                <p className='mr-2'>Конечное время :</p>
                 <input
                     type="number"
-                    name="endTime"
-                    className='border-2 border-black m-2 p-1'
-                    value={equations[0].endTime ?? ""}
-                    onChange={(event) => handleTimeInputChange(event)}
-                />
+                    step='any'
+                    {...register('endTime', {required: true})}
+                    className='flex m-1 p-1 rounded-xl'/>
             </div>
 
-            <div className='flex items-center flex-grow'>
-                Шаг :
+            <div className='flex items-center m-1'>
+                <p className='mr-2'>Шаг по времени :</p>
                 <input
                     type="number"
-                    name="stepTime"
-                    className='border-2 border-black m-2 p-1'
-                    value={equations[0].stepTime ?? ""}
-                    onChange={(event) => handleTimeInputChange(event)}
-                />
+                    step='any'
+                    {...register('stepTime', {required: true})}
+                    className='flex m-1 p-1 rounded-xl'/>
             </div>
 
-            <button type="submit" className='border-black border-2 rounded-full p-2'>Отправить</button>
+            <button className='rounded-2xl border-black border-2 p-1 bg-amber-100'>Отправить</button>
         </form>
-    );
+    </div>
 }
 
-export default FormEquation;
+export default FormEquation

@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
     "@microsoft/signalr": "^8.0.0",
     "chart.js": "^4.4.1",
-    "faker": "^6.6.6",
+    "faker": "^5.5.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
-    "websocket": "^1.0.34"
+    "react-hook-form": "^7.51.0",
+    "websocket": "^1.0.34",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
